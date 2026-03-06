@@ -3,7 +3,7 @@ import {
   UntypedFormGroup,
   UntypedFormArray,
   UntypedFormBuilder,
-  Validators,
+  Validators
 } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { timer } from 'rxjs';
@@ -95,6 +95,8 @@ export class YnabComponent implements OnInit {
 
   // Track YNAB-calculated contribution to detect manual edits
   public ynabCalculatedContribution: number = 0;
+
+  private contributionsSubscription: any = null;
 
   /**
    * Check if the monthly contribution has been manually modified from the YNAB-calculated value.
@@ -229,6 +231,7 @@ export class YnabComponent implements OnInit {
       selectedMonthA: ['', [Validators.required]],
       selectedMonthB: ['', [Validators.required]],
       monthlyContribution: [0, [Validators.required]],
+      contributionsToDate: [0],
       includeHiddenYnabCategories: [true],
       categoryGroups: this.formBuilder.array([]),
       accounts: this.formBuilder.array([]),
@@ -338,6 +341,7 @@ export class YnabComponent implements OnInit {
     result.leanAnnualExpenses = this.expenses.leanFi.annual;
     result.netWorth = this.netWorth;
     result.monthlyContribution = this.budgetForm.value.monthlyContribution;
+    result.contributionsToDate = this.budgetForm.value.contributionsToDate;
     result.budgetCategoryGroups = this.budgetForm.value.categoryGroups;
     result.currencyIsoCode = this.currencyIsoCode;
     result.monthFromName = this.selectedMonthA.month;
@@ -1152,6 +1156,30 @@ export class YnabComponent implements OnInit {
 
     this.ynabNetWorth = ynabNetWorth;
     this.netWorth = netWorth;
+
+    const control = this.budgetForm.get('contributionsToDate');
+    if (control) {
+      if (control.value == null) {
+        control.setValue(this.netWorth, { emitEvent: false });
+      }
+
+      // subscribe once to clamp live typing
+      if (!this.contributionsSubscription) {
+        this.contributionsSubscription = control.valueChanges.subscribe(value => {
+          if (value == null) return; // skip null
+          if (value < 0) control.setValue(0, { emitEvent: false });
+          else if (value > this.netWorth) control.setValue(this.netWorth, { emitEvent: false });
+        });
+      }
+
+      // clamp
+      if (control.value > this.netWorth) {
+        control.setValue(this.netWorth, { emitEvent: false });
+      }
+      if (control.value < 0) {
+        control.setValue(0, { emitEvent: false });
+      }
+    }
   }
 
   private mapAccounts(accounts: ynab.Account[]) {
@@ -1282,6 +1310,7 @@ export class YnabComponent implements OnInit {
       selectedMonthB: this.selectedMonthB.month,
       includeHiddenYnabCategories: this.includeHiddenYnabCategories,
       monthlyContribution,
+      // contributionsToDate: this.netWorth,
       expectedAnnualGrowthRate: this.expectedAnnualGrowthRate,
       safeWithdrawalRatePercentage: this.safeWithdrawalRatePercentage,
       birthdate: this.birthdate,
