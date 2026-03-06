@@ -469,10 +469,10 @@
                     <td class="align-middle">{{ ynabNetWorth | currency : currencyIsoCode }}</td>
                     <td class="align-middle">{{ netWorth | currency : currencyIsoCode }}</td>
                   </tr>
-                  <tr *ngIf="!hideInstructions">
+                  <tr>
                     <th>
                       <div>Contributions to Date</div>
-                      <small style="font-weight: 400;" *ngIf="!hideInstructions">
+                      <small *ngIf="!hideInstructions" style="font-weight: 400;">
                         The total amount you've contributed to your portfolio so far (shown in red)
                       </small>
                     </th>
