@@ -19,6 +19,7 @@ export class CalculateInput {
   expectedExternalAnnualContributions = 0;
   additionalLumpSumNeeded = 0;
   targetRetirementAge: number | null = null;
+  simulateToRetirement: boolean;
   visualCoastDate: Date | null = null;
 
   // Time series for dynamic values
